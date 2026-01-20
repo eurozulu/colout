@@ -2,6 +2,7 @@ package colout
 
 import (
 	"bytes"
+	"fmt"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"io"
@@ -16,14 +17,23 @@ type ColumnWriter struct {
 }
 
 func (cw ColumnWriter) Write(p []byte) (n int, err error) {
+	if cw.Out == nil {
+		return 0, fmt.Errorf("output is not set")
+	}
 	return cw.Out.Write(p)
 }
 
 func (cw ColumnWriter) WriteString(s string) (n int, err error) {
+	if cw.Out == nil {
+		return 0, fmt.Errorf("output is not set")
+	}
 	return cw.Out.Write([]byte(s))
 }
 
 func (cw ColumnWriter) WriteStrings(ss []string) (n int, err error) {
+	if cw.Out == nil {
+		return 0, fmt.Errorf("output is not set")
+	}
 	buf := bytes.NewBuffer(nil)
 	for i, sz := range ss {
 		if i > 0 && cw.ColumnSpacer != "" {
