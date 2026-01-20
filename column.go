@@ -39,7 +39,7 @@ func (col Column) FormatString(s string) string {
 	}
 	if padSize < 0 {
 		// trim if string is too long
-		ss := s[:len(s)+padSize]
+		ss := s[:(len(s)+padSize)-len("...")]
 		if len(ss) > 4 {
 			ss = strings.Join([]string{ss[:len(ss)-3], "..."}, "")
 		}
