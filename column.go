@@ -21,7 +21,7 @@ type Column struct {
 var DefaultColumn = Column{
 	Name:      "",
 	Alignment: Left,
-	Width:     20,
+	Width:     -1,
 }
 
 func (col Column) FormatString(s string) string {
