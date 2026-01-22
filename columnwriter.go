@@ -1,49 +1,41 @@
 package colout
 
 import (
+	"bufio"
 	"bytes"
-	"fmt"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"io"
+	"os"
 	"strings"
 )
 
-// ColumnWriter writes comma-delimited strings into fixed sized columns
 type ColumnWriter struct {
-	Columns      []Column
-	ColumnSpacer string
-	Out          io.Writer
+	Output          io.Writer
+	Columns         []Column
+	StringDelimiter string
+	ColumnSpacer    string
 }
 
-func (cw ColumnWriter) Write(p []byte) (n int, err error) {
-	if cw.Out == nil {
-		return 0, fmt.Errorf("output is not set")
+func (c ColumnWriter) Write(p []byte) (n int, err error) {
+	out := c.Output
+	if out == nil {
+		out = os.Stdout
 	}
-	return cw.Out.Write(p)
+	return out.Write(p)
 }
 
-func (cw ColumnWriter) WriteString(s string) (n int, err error) {
-	if cw.Out == nil {
-		return 0, fmt.Errorf("output is not set")
-	}
-	return cw.Out.Write([]byte(s))
-}
-
-func (cw ColumnWriter) WriteStrings(ss []string) (n int, err error) {
-	if cw.Out == nil {
-		return 0, fmt.Errorf("output is not set")
-	}
+func (c ColumnWriter) WriteString(s string) (n int, err error) {
+	scn := bufio.NewScanner(strings.NewReader(s))
 	buf := bytes.NewBuffer(nil)
-	for i, sz := range ss {
-		if i > 0 && cw.ColumnSpacer != "" {
-			buf.WriteString(cw.ColumnSpacer)
-		}
-		col := cw.ColumnAtIndex(i)
-		buf.WriteString(col.FormatString(sz))
+	if c.StringDelimiter == "" {
+		c.StringDelimiter = ","
 	}
-	buf.WriteRune('\n')
-	return cw.Out.Write(buf.Bytes())
+	for scn.Scan() {
+		buf.WriteString(c.formatString(scn.Text()))
+		buf.WriteString("\n")
+	}
+	return c.Write(buf.Bytes())
 }
 
 func (cw ColumnWriter) ColumnNames() []string {
@@ -58,18 +50,22 @@ func (cw ColumnWriter) ColumnNames() []string {
 	return names
 }
 
-func (cw ColumnWriter) ColumnAtIndex(index int) Column {
-	if index >= 0 && index < len(cw.Columns) {
-		return cw.Columns[index]
+func (c ColumnWriter) columnAtIndex(i int) Column {
+	if i < 0 || i >= len(c.Columns) {
+		return DefaultColumn
 	}
-	return DefaultColumn
+	return c.Columns[i]
 }
 
-func (cw ColumnWriter) IndexOfColumn(name string) int {
-	for i, c := range cw.Columns {
-		if strings.EqualFold(c.Name, name) {
-			return i
+func (c ColumnWriter) formatString(s string) string {
+	buf := bytes.NewBuffer(nil)
+
+	for i, sz := range strings.Split(s, c.StringDelimiter) {
+		if i > 0 {
+			buf.WriteString(c.ColumnSpacer)
 		}
+		sz = c.columnAtIndex(i).FormatString(sz)
+		buf.WriteString(sz)
 	}
-	return -1
+	return buf.String()
 }

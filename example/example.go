@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/eurozulu/colout"
 	"log"
-	"os"
 	"strings"
 )
 
@@ -35,12 +34,11 @@ func main() {
 			},
 		},
 		ColumnSpacer: "  ",
-		Out:          os.Stdout,
 	}
-	if _, err := cw.WriteStrings(cw.ColumnNames()); err != nil {
+	if _, err := cw.WriteString(strings.Join(cw.ColumnNames(), ",")); err != nil {
 		log.Fatal(err)
 	}
-	if _, err := cw.WriteStrings(strings.Split(text, ",")); err != nil {
+	if _, err := cw.WriteString(text); err != nil {
 		log.Fatal(err)
 	}
 }
